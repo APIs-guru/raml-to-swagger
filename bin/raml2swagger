@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+'use strict';
+
+var assert = require('assert');
+var fs = require('fs');
+var srTools = require('swagger-tools').specs.v2;
+var ramlToSwagger = require('../src/index.js');
+
+var in_filename = process.argv[2];
+if (!in_filename) {
+  console.log('missing RAML filename');
+  process.exit(1);
+}
+
+var out_filename = process.argv[3];
+if (!out_filename) {
+  console.log('missing Swagger filename');
+  process.exit(1);
+}
+
+var raml = fs.readFileSync(in_filename).toString();
+var swagger = ramlToSwagger.convert(raml);
+validateSwagger(swagger, function (swagger) {
+  //TODO: output to file
+  console.log(swagger);
+});
+
+function validateSwagger(swagger, cb) {
+  return srTools.validate(swagger, function (validationError, validationResults) {
+    if (validationError) {
+      console.log(validationError);
+      process.exit(1);
+    }
+
+    if (validationResults && validationResults.errors && validationResults.errors.length) {
+      console.log(JSON.stringify(swagger, null, 2));
+      console.log(JSON.stringify(validationResults.errors, null, 2));
+      process.exit(1);
+    }
+    cb(swagger);
+  });
+}

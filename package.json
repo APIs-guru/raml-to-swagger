@@ -1,0 +1,27 @@
+{
+  "name": "raml-to-swagger",
+  "version": "0.0.1",
+  "description": "Script for converting RAML format into Swagger 2.0",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/APIs-guru/raml-to-swagger.git"
+  },
+  "keywords": [
+    "API",
+    "REST",
+    "Swagger",
+    "RAML"
+  ],
+  "author": "Ivan Goncharov <ivan.goncharov.ua@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/APIs-guru/raml-to-swagger/issues"
+  }
+}
