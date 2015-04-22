@@ -3,12 +3,6 @@
   "version": "0.0.1",
   "description": "Script for converting RAML format into Swagger 2.0",
   "main": "src/index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git://github.com/APIs-guru/raml-to-swagger.git"
@@ -23,5 +17,13 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/APIs-guru/raml-to-swagger/issues"
+  },
+  "bin": {
+    "raml2swagger": "./bin/raml2swagger"
+  },
+  "dependencies": {
+    "swagger-tools": "~0.8.5",
+    "URIjs": "~1.15.0",
+    "lodash": "~3.6.0"
   }
 }
