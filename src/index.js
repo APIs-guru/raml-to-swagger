@@ -1,21 +1,14 @@
 'use strict';
 
 var assert = require('assert');
-var YAML = require('js-yaml');
 var URI = require('URIjs');
 var _ = require('lodash');
 var jsonCompat = require('json-schema-compatibility');
 var traverse = require('traverse');
 var HttpStatus = require('http-status-codes').getStatusText;
 
-exports.convert = function (data) {
-  var firstLine = data.substr(0, data.indexOf('\n'));
-  assert.equal(firstLine, '#%RAML 0.8');
+exports.convert = function (raml) {
 
-  //convert from YAML to JSON
-  var raml = YAML.safeLoad(data);
-
-  checkIncludes(raml);
   //Don't support URI templates right now.
   assert(raml.baseUri.indexOf('{') == -1);
   assert(!('baseUriParameters' in raml));
@@ -48,12 +41,6 @@ exports.convert = function (data) {
   removeUndefined(swagger);
   return swagger;
 };
-
-function checkIncludes(obj) {
-  traverse(obj).forEach(function (value) {
-    assert(!_.startsWith(value, '!include'));
-  });
-}
 
 function parseResources(data) {
   var srPaths = {};
