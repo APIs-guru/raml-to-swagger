@@ -27,6 +27,7 @@
     "lodash": "~3.6.0",
     "js-yaml": "~3.2.7",
     "traverse": "~0.6.6",
+    "json-schema-compatibility": "APIs-guru/json-schema-compatibility",
     "http-status-codes": "~1.0.5"
   }
 }
