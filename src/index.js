@@ -29,8 +29,9 @@ exports.convert = function (raml) {
     },
     host: baseUri.host(),
     basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
-    schemes: [baseUri.scheme()],
-    paths: parseResources(raml)
+    schemes: parseProtocols(raml.protocols) || [baseUri.scheme()],
+    paths: parseResources(raml),
+    definitions: parseSchemas(raml.schemas)
   };
 
   if ('mediaType' in raml) {
@@ -41,6 +42,18 @@ exports.convert = function (raml) {
   removeUndefined(swagger);
   return swagger;
 };
+
+function parseSchemas(ramlSchemas) {
+  return _.reduce(ramlSchemas, function (definitions, ramlSchemasMap) {
+    return _.assign(definitions, ramlSchemasMap, function (dummy, ramlSchema) {
+      return convertSchema(ramlSchema);
+    });
+  }, {});
+}
+
+function parseProtocols(ramlProtocols) {
+  return _.map(ramlProtocols, String.toLowerCase);
+}
 
 function parseResources(data) {
   var srPaths = {};
@@ -192,9 +205,17 @@ function parseJsonPayload(data)
 {
   assert(!_.has(data, 'example'));
   assert(_.has(data, 'schema'));
-  assert(!_.startsWith(data.schema, '!include'));
-  var schema = JSON.parse(data.schema);
 
+  return convertSchema(data.schema);
+}
+
+function convertSchema(schema) {
+  if (_.isUndefined(schema))
+    return;
+
+  assert(_.isString(schema));
+
+  var schema = JSON.parse(schema);
   //FIXME:
   assert.equal(schema.$schema, 'http://json-schema.org/draft-03/schema');
 
