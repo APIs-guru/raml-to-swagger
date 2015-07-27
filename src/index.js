@@ -13,8 +13,6 @@ exports.convert = function (raml) {
   assert(raml.baseUri.indexOf('{') == -1);
   assert(!('baseUriParameters' in raml));
 
-  assert(!('protocols' in raml));
-  assert(!('schemas' in raml));
   assert(!('uriParameters' in raml));
 
   //FIXME:
@@ -30,7 +28,7 @@ exports.convert = function (raml) {
     host: baseUri.host(),
     basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
     schemes: parseProtocols(raml.protocols) || [baseUri.scheme()],
-    paths: parseResources(raml),
+    paths: parseResources(raml.resources),
     definitions: parseSchemas(raml.schemas)
   };
 
@@ -55,25 +53,26 @@ function parseProtocols(ramlProtocols) {
   return _.map(ramlProtocols, String.toLowerCase);
 }
 
-function parseResources(data) {
+function parseResources(ramlResources, srPathParameters) {
   var srPaths = {};
 
-  _.each(data, function (resource, resourceName) {
-    if (resourceName[0] != '/')
-      return;
+  _.each(ramlResources, function (ramlResource) {
 
-    assert(!('displayName' in resource));
-    //FIXME:
-    //assert(!('description' in value));
-    assert(!('baseUriParameters' in resource));
+    assert(!('displayName' in ramlResource));
+    assert(!('description' in ramlResource && ramlResource.description !== ''));
+    assert(!('baseUriParameters' in ramlResource));
 
-    var srParameters = parseParametersList(resource.uriParameters, 'path');
+    var resourceName = ramlResource.relativeUri;
+    assert(resourceName);
 
-    var srMethods = parseMethodList(resource);
+    srPathParameters = (srPathParameters || []).concat(
+      parseParametersList(ramlResource.uriParameters, 'path'));
+
+    var srMethods = parseMethodList(ramlResource.methods, srPathParameters);
     if (!_.isEmpty(srMethods))
       srPaths[resourceName] = srMethods;
 
-    var srSubPaths = parseResources(resource);
+    var srSubPaths = parseResources(ramlResource.resources, srPathParameters);
     _.each(srSubPaths, function (subResource, subResourceName) {
       srPaths[resourceName + subResourceName] = subResource;
     });
@@ -81,38 +80,37 @@ function parseResources(data) {
   return srPaths;
 }
 
-function parseMethodList(data) {
-  var httpMethods = ['options', 'get', 'head', 'post',
-                     'put', 'delete', 'trace', 'patch'];
+function parseMethodList(ramlMethods, srPathParameters) {
   var srMethods = {};
-  _.each(data, function (value, key) {
-    if (httpMethods.indexOf(key) === -1)
-      return;
-    srMethods[key] = parseMethod(value);
+  _.each(ramlMethods, function (ramlMethod) {
+    var srMethod = parseMethod(ramlMethod);
+    if (!_.isEmpty(srPathParameters))
+      srMethod.parameters = srPathParameters.concat(srMethod.parameters);
+    srMethods[ramlMethod.method] = srMethod;
   });
   return srMethods;
 }
 
-function parseMethod(data) {
-  assert(!('headers' in data));
-  assert(!('protocols' in data));
+function parseMethod(ramlMethod) {
+  //FIXME:
+  //assert(!('protocols' in data));
+  //assert(!('securedBy' in data));
 
   //assert(_.has(data, 'responses'));
 
   var srMethod = {
-    description: data.description,
+    description: ramlMethod.description,
   };
 
-  var srParameters = [];
-
-  if (_.has(data, 'queryParameters'))
-    _.extend(srParameters, parseParametersList(data.queryParameters, 'query'));
+  var srParameters = parseParametersList(ramlMethod.queryParameters, 'query');
+  srParameters = srParameters.concat(
+    parseParametersList(ramlMethod.headers, 'header'));
 
   if (!_.isEmpty(srParameters))
     srMethod.parameters = srParameters;
 
-  parseBody(data, srMethod);
-  srMethod.responses = parseResponses(data.responses);
+  //parseBody(data, srMethod);
+  //srMethod.responses = parseResponses(data.responses);
   return srMethod;
 }
 
@@ -141,22 +139,21 @@ function parseResponses(data) {
 }
 
 function parseParametersList(params, inValue) {
-  var srParams = [];
+  assert(_.isUndefined(params) || _.isPlainObject(params));
 
-  _.each(params, function (value, key) {
-     assert(!_.has(value, 'displayName'));
+  return _.map(params, function (value, key) {
      assert(!_.has(value, 'repeat'));
-     assert(!_.has(value, 'example'));
-     assert(!_.has(value, 'type') ||
+     //FIXME:
+     //assert(!_.has(value, 'example'));
+     assert(_.has(value, 'type') &&
        ['string', 'number', 'integer', 'boolean'].indexOf(value.type) !== -1);
-     assert(_.isObject(value));
 
-     srParams.push({
-       name: key,
+     return {
+       name: value.displayName || key,
        in: inValue,
        description: value.description,
        required: value.required,
-       type: value.type || 'string',
+       type: value.type,
        enum: value.enum,
        default: value.default,
        maximum: value.maximum,
@@ -164,7 +161,7 @@ function parseParametersList(params, inValue) {
        maxLength: value.maxLength,
        minLength: value.minLength,
        pattern: value.pattern
-     });
+     };
   });
 }
 
@@ -216,11 +213,11 @@ function convertSchema(schema) {
   assert(_.isString(schema));
 
   var schema = JSON.parse(schema);
+
   //FIXME:
   assert.equal(schema.$schema, 'http://json-schema.org/draft-03/schema');
 
   schema = jsonCompat.v4(schema);
-  //FIXME:
   delete schema.$schema;
   return schema;
 }
