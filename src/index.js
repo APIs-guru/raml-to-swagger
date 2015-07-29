@@ -110,29 +110,30 @@ function parseMethod(ramlMethod) {
     srMethod.parameters = srParameters;
 
   //parseBody(data, srMethod);
-  //srMethod.responses = parseResponses(data.responses);
+  srMethod.responses = parseResponses(ramlMethod.responses);
   return srMethod;
 }
 
-function parseResponses(data) {
-  if (_.isEmpty(data)) {
+function parseResponses(ramlResponces) {
+  if (_.isEmpty(ramlResponces)) {
     return {
       200: { description: HttpStatus(200) }
     };
   }
 
   var srResponses = {};
-  _.each(data, function (value, key) {
-    srResponses[key] = {
-      description: value.description || HttpStatus(parseInt(key))
+  _.each(ramlResponces, function (ramlResponce, httpCode) {
+    var defaultDescription = HttpStatus(parseInt(httpCode));
+    srResponses[httpCode] = {
+      description: ramlResponce.description || defaultDescription
     };
 
-    if (!_.has(value, 'body'))
+    if (!_.has(ramlResponce, 'body'))
       return;
 
-    if (!_.has(value.body, 'schema')) {
-      console.log(_.keys(value.body));
-    }
+    //if (!_.has(value.body, 'schema')) {
+    //  console.log(_.keys(value.body));
+    //}
 
   });
   return srResponses;
