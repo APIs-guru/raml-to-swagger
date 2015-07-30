@@ -67,14 +67,14 @@ function parseResources(ramlResources, srPathParameters) {
     var resourceName = ramlResource.relativeUri;
     assert(resourceName);
 
-    srPathParameters = (srPathParameters || []).concat(
+    var srResourceParameters = (srPathParameters || []).concat(
       parseParametersList(ramlResource.uriParameters, 'path'));
 
-    var srMethods = parseMethodList(ramlResource.methods, srPathParameters);
+    var srMethods = parseMethodList(ramlResource.methods, srResourceParameters);
     if (!_.isEmpty(srMethods))
       srPaths[resourceName] = srMethods;
 
-    var srSubPaths = parseResources(ramlResource.resources, srPathParameters);
+    var srSubPaths = parseResources(ramlResource.resources, srResourceParameters);
     _.each(srSubPaths, function (subResource, subResourceName) {
       srPaths[resourceName + subResourceName] = subResource;
     });
