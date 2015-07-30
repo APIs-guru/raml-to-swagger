@@ -50,7 +50,9 @@ function parseSchemas(ramlSchemas) {
 }
 
 function parseProtocols(ramlProtocols) {
-  return _.map(ramlProtocols, String.toLowerCase);
+  return _.map(ramlProtocols, function (str) {
+    return str.toLowerCase();
+  });
 }
 
 function parseResources(ramlResources, srPathParameters) {
