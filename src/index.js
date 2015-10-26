@@ -4,21 +4,26 @@ var assert = require('assert');
 var URI = require('urijs');
 var _ = require('lodash');
 var jsonCompat = require('json-schema-compatibility');
-var traverse = require('traverse');
 var HttpStatus = require('http-status-codes').getStatusText;
+var jp = require('jsonpath');
 
 exports.convert = function (raml) {
+  var baseUri = raml.baseUri;
 
-  //Don't support URI templates right now.
-  assert(raml.baseUri.indexOf('{') == -1);
-  assert(!('baseUriParameters' in raml));
+  //
+  baseUri = baseUri.replace(/{version}/g, raml.version);
+  //Don't support other URI templates right now.
+  assert(baseUri.indexOf('{') == -1);
 
+  baseUri = URI(raml.baseUri);
+
+  assert(!('baseUriParameters' in raml) ||
+    _.isEqual(_.keys(raml.baseUriParameters), ['version']));
   assert(!('uriParameters' in raml));
 
   //FIXME:
   //console.log(raml.documentation);
 
-  var baseUri = URI(raml.baseUri);
   var swagger = {
     swagger: '2.0',
     info: {
@@ -32,12 +37,21 @@ exports.convert = function (raml) {
     definitions: parseSchemas(raml.schemas)
   };
 
+  jp.apply(swagger.paths, '$..*.schema' , function (schema) {
+    var result = schema;
+    _.each(swagger.definitions, function (definition, name) {
+      if (!_.isEqual(schema, definition))
+        return;
+      result = { $ref: '#/definitions/' + name};
+    });
+    return result;
+  });
+
   if ('mediaType' in raml) {
     swagger.consumes = [raml.mediaType];
     swagger.produces = [raml.mediaType];
   }
 
-  removeUndefined(swagger);
   return swagger;
 };
 
@@ -60,7 +74,7 @@ function parseResources(ramlResources, srPathParameters) {
 
   _.each(ramlResources, function (ramlResource) {
 
-    assert(!('displayName' in ramlResource));
+    //assert(!('displayName' in ramlResource));
     assert(!('description' in ramlResource && ramlResource.description !== ''));
     assert(!('baseUriParameters' in ramlResource));
 
@@ -111,34 +125,43 @@ function parseMethod(ramlMethod) {
   if (!_.isEmpty(srParameters))
     srMethod.parameters = srParameters;
 
-  //parseBody(data, srMethod);
-  srMethod.responses = parseResponses(ramlMethod.responses);
+  parseBody(ramlMethod.body, srMethod);
+
+  parseResponses(ramlMethod, srMethod);
+
   return srMethod;
 }
 
-function parseResponses(ramlResponces) {
+function parseResponses(ramlMethod, srMethod) {
+  var ramlResponces = ramlMethod.responses;
   if (_.isEmpty(ramlResponces)) {
     return {
       200: { description: HttpStatus(200) }
     };
   }
 
-  var srResponses = {};
+  srMethod.responses = {};
   _.each(ramlResponces, function (ramlResponce, httpCode) {
     var defaultDescription = HttpStatus(parseInt(httpCode));
-    srResponses[httpCode] = {
-      description: ramlResponce.description || defaultDescription
+    var srResponse = srMethod.responses[httpCode] = {
+      description: _.get(ramlResponce, 'description') || defaultDescription
     };
 
     if (!_.has(ramlResponce, 'body'))
       return;
 
-    //if (!_.has(value.body, 'schema')) {
-    //  console.log(_.keys(value.body));
-    //}
+    var jsonMIME = 'application/json';
+    var produces = _.without(_.keys(ramlResponce.body), jsonMIME);
+    //TODO: types could have examples.
+    if (!_.isEmpty(produces))
+      srMethod.produces = produces;
 
+    var jsonSchema = _.get(ramlResponce.body, jsonMIME);
+    if (!_.isUndefined(jsonSchema)) {
+      assert(!_.has(jsonSchema, 'example'));
+      srResponse.schema = parseJsonPayload(jsonSchema);
+    }
   });
-  return srResponses;
 }
 
 function parseParametersList(params, inValue) {
@@ -168,12 +191,11 @@ function parseParametersList(params, inValue) {
   });
 }
 
-function parseBody(data, srMethod) {
-  if (!_.has(data, 'body'))
+function parseBody(ramlBody, srMethod) {
+  if (!ramlBody)
     return;
 
-  data = data.body;
-  var keys = _.keys(data)
+  var keys = _.keys(ramlBody)
   assert(!_.has(keys, 'application/x-www-form-urlencoded'));
   assert(!_.has(keys, 'multipart/form-data'));
   //TODO: All parsers of RAML MUST be able to interpret ... and XML Schema
@@ -187,8 +209,6 @@ function parseBody(data, srMethod) {
   if (_.indexOf(keys, jsonMIME) === -1)
     return;
 
-  assert(_.isEmpty(consumes));//No alternatives to JSON
-
   if (_.isUndefined(srMethod.parameters))
     srMethod.parameters = [];
 
@@ -197,13 +217,13 @@ function parseBody(data, srMethod) {
     name: 'body',
     in: 'body',
     required: true,
-    schema: parseJsonPayload(data[jsonMIME])
+    //TODO: copy example
+    schema: parseJsonPayload(ramlBody[jsonMIME])
   });
 }
 
 function parseJsonPayload(data)
 {
-  assert(!_.has(data, 'example'));
   assert(_.has(data, 'schema'));
 
   return convertSchema(data.schema);
@@ -223,11 +243,4 @@ function convertSchema(schema) {
   schema = jsonCompat.v4(schema);
   delete schema.$schema;
   return schema;
-}
-
-function removeUndefined(obj) {
-  traverse(obj).forEach(function (value) {
-    if (value === undefined)
-      this.remove();
-  });
 }

@@ -23,9 +23,8 @@
   },
   "dependencies": {
     "urijs": "~1.16.1",
-    "lodash": "~3.6.0",
-    "traverse": "~0.6.6",
-    "json-schema-compatibility": "^1.1.0",
-    "http-status-codes": "~1.0.5"
+    "lodash": "~3.10.1",
+    "http-status-codes": "~1.0.5",
+    "jsonpath": "^0.2.0"
   }
 }
