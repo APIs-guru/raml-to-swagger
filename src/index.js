@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var URI = require('URIjs');
+var URI = require('urijs');
 var _ = require('lodash');
 var jsonCompat = require('json-schema-compatibility');
 var traverse = require('traverse');
