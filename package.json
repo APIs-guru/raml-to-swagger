@@ -22,7 +22,6 @@
     "raml2swagger": "./bin/raml2swagger"
   },
   "dependencies": {
-    "swagger-tools": "~0.8.5",
     "urijs": "~1.16.1",
     "lodash": "~3.6.0",
     "traverse": "~0.6.6",
