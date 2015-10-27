@@ -237,10 +237,74 @@ function convertSchema(schema) {
 
   var schema = JSON.parse(schema);
 
+  delete schema.id;
+
   //FIXME:
   assert.equal(schema.$schema, 'http://json-schema.org/draft-03/schema');
 
   schema = jsonCompat.v4(schema);
   delete schema.$schema;
+
+  //Add '#/definitions/' prefix to all internal refs
+  jp.apply(schema, '$..*["$ref"]' , function (ref) {
+    return '#/definitions/' + ref;
+  });
+
+  //Fixes for common mistakes in RAML 0.8
+
+  // Fix case when instead of 'additionalProperties' schema put in following wrappers:
+  // {
+  //   "type": "object",
+  //   "": [{
+  //     ...
+  //   }]
+  // }
+  // or
+  // {
+  //   "type": "object",
+  //   "properties": {
+  //     "": [{
+  //       ...
+  //     }]
+  //   }
+  // }
+
+  _.each(jp.nodes(schema, '$..*[""]'), function(result) {
+    var value = result.value;
+    var path = result.path;
+
+    if (!_.isArray(value) || _.size(value) !== 1 || !_.isPlainObject(value[0]))
+      return;
+
+    path = _.dropRight(path);
+    var parent = jp.value(schema, jp.stringify(path));
+    delete parent[''];
+
+    if (_.isEmpty(parent) && _.last(path) === 'properties') {
+      parent = jp.value(schema, jp.stringify(_.dropRight(path)));
+      delete parent.properties;
+    }
+
+    assert(parent.type === 'object');
+    parent.additionalProperties = value[0];
+  });
+
+  // Fix case when arrays definition wrapped with array, like that:
+  // [{
+  //   "type": "array",
+  //   ...
+  // }]
+
+  _.each(jp.nodes(schema, '$..properties.*[0]'), function(result) {
+    var path = _.dropRight(result.path);
+    var value = jp.value(schema, jp.stringify(path));
+
+    if (_.size(value) !== 1 || !_.isArray(value) || value[0].type !== 'array')
+      return;
+
+    var parent = jp.value(schema, jp.stringify(_.dropRight(path)));
+    parent[_.last(path)] = value[0];
+  });
+
   return schema;
 }
