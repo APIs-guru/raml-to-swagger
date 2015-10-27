@@ -112,8 +112,6 @@ function parseMethod(ramlMethod) {
   //assert(!('protocols' in data));
   //assert(!('securedBy' in data));
 
-  //assert(_.has(data, 'responses'));
-
   var srMethod = {
     description: ramlMethod.description,
   };
