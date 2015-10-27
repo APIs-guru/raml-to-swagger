@@ -171,11 +171,13 @@ function parseParametersList(params, inValue) {
      assert(!_.has(value, 'repeat'));
      //FIXME:
      //assert(!_.has(value, 'example'));
+     //assert(!_.has(value, 'displayName'));
      assert(_.has(value, 'type') &&
        ['string', 'number', 'integer', 'boolean'].indexOf(value.type) !== -1);
 
+     //
      return {
-       name: value.displayName || key,
+       name: key,
        in: inValue,
        description: value.description,
        required: value.required,
