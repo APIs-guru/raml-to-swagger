@@ -241,10 +241,11 @@ function convertSchema(schema) {
   delete schema.id;
 
   //FIXME:
-  assert.equal(schema.$schema, 'http://json-schema.org/draft-03/schema');
+  assert.equal(schema.$schema || schema[''], 'http://json-schema.org/draft-03/schema');
 
   schema = jsonCompat.v4(schema);
   delete schema.$schema;
+  delete schema[''];
 
   //Add '#/definitions/' prefix to all internal refs
   jp.apply(schema, '$..*["$ref"]' , function (ref) {
