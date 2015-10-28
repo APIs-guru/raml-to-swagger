@@ -156,7 +156,8 @@ function parseResponses(ramlMethod, srMethod) {
 
     var jsonSchema = _.get(ramlResponce.body, jsonMIME);
     if (!_.isUndefined(jsonSchema)) {
-      assert(!_.has(jsonSchema, 'example'));
+      //TODO:
+      //assert(!_.has(jsonSchema, 'example'));
       srResponse.schema = parseJsonPayload(jsonSchema);
     }
   });
