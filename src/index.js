@@ -33,6 +33,7 @@ exports.convert = function (raml) {
     host: baseUri.host(),
     basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
     schemes: parseProtocols(raml.protocols) || [baseUri.scheme()],
+    securityDefinitions: parseSecuritySchemes(raml.securitySchemes),
     paths: parseResources(raml.resources),
     definitions: parseSchemas(raml.schemas)
   };
@@ -54,6 +55,56 @@ exports.convert = function (raml) {
 
   return swagger;
 };
+
+function parseSecuritySchemes(ramlSecuritySchemes) {
+  var srSecurityDefinitions = {};
+
+  _.each(ramlSecuritySchemes, function (ramlSecurityArray) {
+    _.each(ramlSecurityArray, function (ramlSecurityObj, name) {
+      assert(ramlSecurityObj.type);
+      var srType = {
+        'OAuth 2.0': 'oauth2',
+        'Basic Authentication': 'basic',
+      }[ramlSecurityObj.type];
+      assert(srType);
+
+      var srSecurity = {
+        type: srType,
+        description: ramlSecurityObj.description,
+      };
+
+      if (srType !== 'oauth2') {
+        srSecurityDefinitions[name] = srSecurity;
+        return;
+      }
+
+      var ramlSettings = ramlSecurityObj.settings;
+      _.assign(srSecurity, {
+        authorizationUrl: ramlSettings.authorizationUri,
+        tokenUrl: ramlSettings.accessTokenUri,
+        scopes: ramlSettings.scopes
+      });
+
+      var ramlFlows = ramlSettings.authorizationGrants;
+      _.each(ramlFlows, function (ramlFlow) {
+         var srFlowSecurity = _.clone(srSecurity);
+         srFlowSecurity.flow = {
+           'code': 'accessCode',
+           'token': 'implicit',
+           'owner': 'password',
+           'credentials': 'application'
+         }[ramlFlow];
+
+         var fullName = name;
+         if (_.size(ramlFlows) > 1)
+           fullName = name + '_' + srFlowSecurity.flow;
+
+         srSecurityDefinitions[fullName] = srFlowSecurity;
+      });
+    });
+  });
+  return srSecurityDefinitions;
+}
 
 function parseSchemas(ramlSchemas) {
   return _.reduce(ramlSchemas, function (definitions, ramlSchemasMap) {
