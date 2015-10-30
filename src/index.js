@@ -15,7 +15,7 @@ exports.convert = function (raml) {
   //Don't support other URI templates right now.
   assert(baseUri.indexOf('{') == -1);
 
-  baseUri = URI(raml.baseUri);
+  baseUri = URI(baseUri);
 
   assert(!('baseUriParameters' in raml) ||
     _.isEqual(_.keys(raml.baseUriParameters), ['version']));
