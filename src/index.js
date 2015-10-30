@@ -82,18 +82,26 @@ function parseSecuritySchemes(ramlSecuritySchemes) {
       _.assign(srSecurity, {
         authorizationUrl: ramlSettings.authorizationUri,
         tokenUrl: ramlSettings.accessTokenUri,
-        scopes: ramlSettings.scopes
+        scopes: _.transform(ramlSettings.scopes, function (result, name) {
+          result[name] = '';
+        }, {})
       });
 
       var ramlFlows = ramlSettings.authorizationGrants;
       _.each(ramlFlows, function (ramlFlow) {
          var srFlowSecurity = _.clone(srSecurity);
-         srFlowSecurity.flow = {
+         var srFlow = srFlowSecurity.flow = {
            'code': 'accessCode',
            'token': 'implicit',
            'owner': 'password',
            'credentials': 'application'
          }[ramlFlow];
+
+         if (srFlow === 'password' || srFlow === 'application')
+           delete srFlowSecurity.authorizationUrl;
+
+         if (srFlow === 'implicit')
+           delete srFlowSecurity.tokenUrl;
 
          var fullName = name;
          if (_.size(ramlFlows) > 1)
