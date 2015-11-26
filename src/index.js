@@ -237,10 +237,9 @@ function parseParametersList(params, inValue) {
      //assert(!_.has(value, 'example'));
      //assert(!_.has(value, 'displayName'));
      assert(_.has(value, 'type') &&
-       ['string', 'number', 'integer', 'boolean'].indexOf(value.type) !== -1);
+       ['date', 'string', 'number', 'integer', 'boolean'].indexOf(value.type) !== -1);
 
-     //
-     return {
+     var srParameter = {
        name: key,
        in: inValue,
        description: value.description,
@@ -254,6 +253,13 @@ function parseParametersList(params, inValue) {
        minLength: value.minLength,
        pattern: value.pattern
      };
+
+     if (srParameter.type === 'date') {
+       srParameter.type = 'string';
+       srParameter.format = 'date';
+     }
+
+     return srParameter;
   });
 }
 
