@@ -62,6 +62,12 @@ function parseSecuritySchemes(ramlSecuritySchemes) {
   _.each(ramlSecuritySchemes, function (ramlSecurityArray) {
     _.each(ramlSecurityArray, function (ramlSecurityObj, name) {
       assert(ramlSecurityObj.type);
+
+      //Swagger 2.0 doesn't support Oauth 1.0 so just skip it.
+      //FIXME: add warning
+      if (ramlSecurityObj.type === 'OAuth 1.0')
+        return;
+
       var srType = {
         'OAuth 2.0': 'oauth2',
         'Basic Authentication': 'basic',
