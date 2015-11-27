@@ -379,5 +379,10 @@ function convertSchema(schema) {
     parent[_.last(path)] = value[0];
   });
 
+  // Fix case then 'items' value is empty array.
+  jp.apply(schema, '$..*[?(@.type === "array" && @.items.length === 0)]', function(schema) {
+    schema.items = {};
+  });
+
   return schema;
 }
