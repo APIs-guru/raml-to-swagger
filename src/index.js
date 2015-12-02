@@ -37,6 +37,19 @@ exports.convert = function (raml) {
     swagger.produces = [raml.mediaType];
   }
 
+  //TODO: refactor into function
+  //Fix incorrect arrays in RAML
+  //TODO: add description
+  _.each(swagger.definitions, function (schema, name) {
+    if (schema.type !== 'array' || !_.isUndefined(schema.items))
+      return;
+
+    if (_.isArray(schema[name]) && _.isPlainObject(schema[name][0])) {
+      schema.items = schema[name][0];
+      delete schema[name];
+    }
+  });
+
   return swagger;
 };
 
