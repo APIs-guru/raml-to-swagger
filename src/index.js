@@ -362,7 +362,7 @@ function convertSchema(schema) {
   //     }]
   //   }
   // }
-
+  // Or simular case for arrays, when same wrapper used instead of 'items'.
   _.each(jp.nodes(schema, '$..*[""]'), function(result) {
     var value = result.value;
     var path = result.path;
@@ -374,13 +374,21 @@ function convertSchema(schema) {
     var parent = jp.value(schema, jp.stringify(path));
     delete parent[''];
 
-    if (_.isEmpty(parent) && _.last(path) === 'properties') {
+    if (_.isEmpty(parent) && ['properties', 'items'].indexOf(_.last(path)) !== -1) {
       parent = jp.value(schema, jp.stringify(_.dropRight(path)));
       delete parent.properties;
     }
 
-    assert(parent.type === 'object');
-    parent.additionalProperties = value[0];
+    switch (parent.type) {
+      case 'object':
+        parent.additionalProperties = value[0];
+        break;
+      case 'array':
+        parent.items = value[0];
+        break;
+      default:
+        assert(false);
+    }
   });
 
   // Fix case when arrays definition wrapped with array, like that:
