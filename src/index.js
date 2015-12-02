@@ -146,8 +146,9 @@ function parseResources(ramlResources, srPathParameters) {
 
   _.each(ramlResources, function (ramlResource) {
 
+    //FIXME: convert or create warning
     //assert(!('displayName' in ramlResource));
-    assert(!('description' in ramlResource && ramlResource.description !== ''));
+    //assert(!('description' in ramlResource && ramlResource.description !== ''));
     assert(!('baseUriParameters' in ramlResource));
 
     var resourceName = ramlResource.relativeUri;
