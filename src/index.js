@@ -318,13 +318,11 @@ function convertSchema(schema) {
   var schema = JSON.parse(schema);
 
   delete schema.id;
-
-  //FIXME:
-  assert.equal(schema.$schema || schema[''], 'http://json-schema.org/draft-03/schema');
-
-  schema = jsonCompat.v4(schema);
   delete schema.$schema;
   delete schema[''];
+
+  //Convertion is safe even for Draft4 schemas, so convert everything
+  schema = jsonCompat.v4(schema);
 
   //Add '#/definitions/' prefix to all internal refs
   jp.apply(schema, '$..*["$ref"]' , function (ref) {
