@@ -8,35 +8,19 @@ var HttpStatus = require('http-status-codes').getStatusText;
 var jp = require('jsonpath');
 
 exports.convert = function (raml) {
-  var baseUri = raml.baseUri;
-
-  //
-  baseUri = baseUri.replace(/{version}/g, raml.version);
-  //Don't support other URI templates right now.
-  assert(baseUri.indexOf('{') == -1);
-
-  baseUri = URI(baseUri);
-
-  assert(!('baseUriParameters' in raml) ||
-    _.isEqual(_.keys(raml.baseUriParameters), ['version']));
-  assert(!('uriParameters' in raml));
-
   //FIXME:
   //console.log(raml.documentation);
 
-  var swagger = {
+  var swagger = _.assign({
     swagger: '2.0',
     info: {
       title: raml.title,
       version: raml.version,
     },
-    host: baseUri.host(),
-    basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
-    schemes: parseProtocols(raml.protocols) || [baseUri.scheme()],
     securityDefinitions: parseSecuritySchemes(raml.securitySchemes),
     paths: parseResources(raml.resources),
     definitions: parseSchemas(raml.schemas)
-  };
+  }, parseBaseUri(raml));
 
   jp.apply(swagger.paths, '$..*.schema' , function (schema) {
     var result = schema;
@@ -55,6 +39,29 @@ exports.convert = function (raml) {
 
   return swagger;
 };
+
+function parseBaseUri(raml) {
+  var baseUri = raml.baseUri;
+
+  if (!baseUri)
+    return {};
+
+  baseUri = baseUri.replace(/{version}/g, raml.version);
+  //Don't support other URI templates right now.
+  assert(baseUri.indexOf('{') == -1);
+
+  baseUri = URI(baseUri);
+
+  assert(!('baseUriParameters' in raml) ||
+    _.isEqual(_.keys(raml.baseUriParameters), ['version']));
+  assert(!('uriParameters' in raml));
+
+  return {
+    host: baseUri.host(),
+    basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
+    schemes: parseProtocols(raml.protocols) || [baseUri.scheme()]
+  };
+}
 
 function parseSecuritySchemes(ramlSecuritySchemes) {
   var srSecurityDefinitions = {};
