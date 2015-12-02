@@ -396,16 +396,8 @@ function convertSchema(schema) {
   //   "type": "array",
   //   ...
   // }]
-
-  _.each(jp.nodes(schema, '$..properties.*[0]'), function(result) {
-    var path = _.dropRight(result.path);
-    var value = jp.value(schema, jp.stringify(path));
-
-    if (_.size(value) !== 1 || !_.isArray(value) || value[0].type !== 'array')
-      return;
-
-    var parent = jp.value(schema, jp.stringify(_.dropRight(path)));
-    parent[_.last(path)] = value[0];
+  jp.apply(schema, '$..properties[?(@.length === 1 && @[0].type === "array")]', function(schema) {
+    return schema[0];
   });
 
   // Fix case then 'items' value is empty array.
