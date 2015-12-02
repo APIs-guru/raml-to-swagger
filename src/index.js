@@ -331,6 +331,21 @@ function convertSchema(schema) {
 
   //Fixes for common mistakes in RAML 0.8
 
+  // Fix case where 'list' keyword used instead of 'items':
+  // {
+  //   "type": "array",
+  //   "list": [{
+  //     ...
+  //   ]}
+  // }
+  if (schema.type === 'array' && !_.isUndefined(schema.list)) {
+    assert(_.isUndefined(schema.items));
+    assert(_.size(schema.list) === 1);
+    assert(_.isPlainObject(schema.list[0]));
+    schema.items = schema.list[0];
+    delete schema.list;
+  }
+
   // Fix case when instead of 'additionalProperties' schema put in following wrappers:
   // {
   //   "type": "object",
