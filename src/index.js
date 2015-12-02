@@ -400,6 +400,25 @@ function convertSchema(schema) {
     return schema[0];
   });
 
+  // Fix incorrect array properties, like that:
+  // {
+  //   "properties": {
+  //     "type": array,
+  //     "<name>": [{
+  //       ...
+  //     }]
+  //   }
+  // }
+  _.each(jp.nodes(schema, '$..properties[?(@.length === 1)]'), function(result) {
+    var name = _.last(result.path);
+    var parent = jp.value(schema, jp.stringify(_.dropRight(result.path)));
+
+    if (parent['type'] === 'array') {
+      parent[name] = {type: 'array', items: result.value[0]}
+      delete parent['type'];
+    }
+  });
+
   // Fix case then 'items' value is empty array.
   jp.apply(schema, '$..*[?(@.type === "array" && @.items.length === 0)]', function(schema) {
     schema.items = {};
