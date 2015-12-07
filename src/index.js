@@ -23,6 +23,9 @@ exports.convert = function (raml) {
   }, parseBaseUri(raml));
 
   jp.apply(swagger.paths, '$..*.schema' , function (schema) {
+    if (!schema || _.isEmpty(schema))
+      return;
+
     var result = schema;
     _.each(swagger.definitions, function (definition, name) {
       if (!_.isEqual(schema, definition))
@@ -41,7 +44,7 @@ exports.convert = function (raml) {
   //Fix incorrect arrays in RAML
   //TODO: add description
   _.each(swagger.definitions, function (schema, name) {
-    if (schema.type !== 'array' || !_.isUndefined(schema.items))
+    if (!schema || schema.type !== 'array' || !_.isUndefined(schema.items))
       return;
 
     if (_.isArray(schema[name]) && _.isPlainObject(schema[name][0])) {
@@ -244,7 +247,7 @@ function parseResponses(ramlMethod, srMethod) {
     if (!_.isUndefined(jsonSchema)) {
       //TODO:
       //assert(!_.has(jsonSchema, 'example'));
-      srResponse.schema = parseJsonPayload(jsonSchema);
+      srResponse.schema = convertSchema(jsonSchema.schema);
     }
   });
 }
@@ -311,7 +314,7 @@ function parseBody(ramlBody, srMethod) {
     in: 'body',
     required: true,
     //TODO: copy example
-    schema: parseJsonPayload(ramlBody[jsonMIME])
+    schema: convertSchema(ramlBody[jsonMIME].schema)
   });
 }
 
@@ -328,7 +331,12 @@ function convertSchema(schema) {
 
   assert(_.isString(schema));
 
-  var schema = JSON.parse(schema);
+  try {
+    var schema = JSON.parse(schema);
+  }
+  catch (e) {
+    return undefined;
+  }
 
   delete schema.id;
   delete schema.$schema;
