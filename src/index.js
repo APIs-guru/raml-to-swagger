@@ -256,7 +256,6 @@ function parseParametersList(params, inValue) {
   assert(_.isUndefined(params) || _.isPlainObject(params));
 
   return _.map(params, function (value, key) {
-     assert(!_.has(value, 'repeat'));
      //FIXME:
      //assert(!_.has(value, 'example'));
      //assert(!_.has(value, 'displayName'));
@@ -264,10 +263,6 @@ function parseParametersList(params, inValue) {
        ['date', 'string', 'number', 'integer', 'boolean'].indexOf(value.type) !== -1);
 
      var srParameter = {
-       name: key,
-       in: inValue,
-       description: value.description,
-       required: value.required,
        type: value.type,
        enum: value.enum,
        default: value.default,
@@ -282,6 +277,22 @@ function parseParametersList(params, inValue) {
        srParameter.type = 'string';
        srParameter.format = 'date';
      }
+
+     if (value.repeat === true) {
+       assert(['query', 'formData'].indexOf(inValue) !== -1);
+       srParameter = {
+         type: 'array',
+         items: srParameter,
+         collectionFormat: 'multi'
+       }
+     }
+
+     _.assign(srParameter, {
+       name: key,
+       in: inValue,
+       description: value.description,
+       required: value.required
+     });
 
      return srParameter;
   });
