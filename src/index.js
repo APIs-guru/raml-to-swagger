@@ -318,13 +318,6 @@ function parseBody(ramlBody, srMethod) {
   });
 }
 
-function parseJsonPayload(data)
-{
-  assert(_.has(data, 'schema'));
-
-  return convertSchema(data.schema);
-}
-
 function convertSchema(schema) {
   if (_.isUndefined(schema))
     return;
