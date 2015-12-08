@@ -325,7 +325,7 @@ function parseBody(ramlBody, srMethod) {
     in: 'body',
     required: true,
     //TODO: copy example
-    schema: convertSchema(ramlBody[jsonMIME].schema)
+    schema: convertSchema(_.get(ramlBody[jsonMIME], 'schema'))
   });
 }
 
