@@ -247,7 +247,7 @@ function parseResponses(ramlMethod, srMethod) {
     if (!_.isUndefined(jsonSchema)) {
       //TODO:
       //assert(!_.has(jsonSchema, 'example'));
-      srResponse.schema = convertSchema(jsonSchema.schema);
+      srResponse.schema = convertSchema(_.get(jsonSchema, 'schema'));
     }
   });
 }
