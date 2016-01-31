@@ -145,7 +145,7 @@ function parseSecuritySchemes(ramlSecuritySchemes) {
 
 function parseSchemas(ramlSchemas) {
   return _.reduce(ramlSchemas, function (definitions, ramlSchemasMap) {
-    return _.assign(definitions, ramlSchemasMap, function (dummy, ramlSchema) {
+    return _.assignWith(definitions, ramlSchemasMap, function (dummy, ramlSchema) {
       return convertSchema(ramlSchema);
     });
   }, {});
