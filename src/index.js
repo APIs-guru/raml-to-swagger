@@ -351,6 +351,9 @@ function convertSchema(schema) {
 
   //Add '#/definitions/' prefix to all internal refs
   jp.apply(schema, '$..*["$ref"]' , function (ref) {
+    // see https://github.com/lucybot/api-spec-converter/issues/99
+    ref = ref.replace(/^#\/schemas\//, '');
+
     return '#/definitions/' + ref;
   });
 
