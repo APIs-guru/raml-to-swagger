@@ -22,10 +22,10 @@
     "raml2swagger": "./bin/raml2swagger"
   },
   "dependencies": {
-    "http-status-codes": "~1.0.5",
+    "http-status-codes": "^1.0.5",
     "json-schema-compatibility": "^1.1.0",
     "jsonpath": "^0.2.5",
-    "lodash": "~4.1.0",
-    "urijs": "~1.17.0"
+    "lodash": "^4.1.0",
+    "urijs": "^1.17.0"
   }
 }
