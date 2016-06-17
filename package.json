@@ -1,6 +1,6 @@
 {
   "name": "raml-to-swagger",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Script for converting RAML format into Swagger 2.0",
   "main": "src/index.js",
   "repository": {
