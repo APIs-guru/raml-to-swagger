@@ -444,10 +444,22 @@ function convertSchema(schema) {
     }
   });
 
-  // Fix case then 'items' value is empty array.
-  jp.apply(schema, '$..*[?(@.type === "array" && @.items.length === 0)]', function(schema) {
-    schema.items = {};
-  });
+  // Fix case then 'items' value is empty or single element array.
+  function unwrapItems(schema) {
+    if (_.isEmpty(schema.items))
+      schema.items = {};
+    else {
+      assert(_.isPlainObject(schema.items[0]));
+      schema.items = schema.items[0];
+    }
+
+    return schema;
+  }
+
+  jp.apply(schema, '$..*[?(@.type === "array" && @.items && @.items.length <= 1)]', unwrapItems);
+  //JSON Path can't apply to root object so do this manually
+  if (schema.type === 'array' && _.isArray(schema.items) && _.size(schema.items) <= 1)
+    unwrapItems(schema);
 
   return schema;
 }
