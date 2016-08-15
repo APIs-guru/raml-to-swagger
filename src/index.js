@@ -11,7 +11,7 @@ exports.convert = function (raml) {
   //FIXME:
   //console.log(raml.documentation);
 
-  var swagger = _.assign({
+  var swagger = {
     swagger: '2.0',
     info: {
       title: raml.title,
@@ -20,7 +20,9 @@ exports.convert = function (raml) {
     securityDefinitions: parseSecuritySchemes(raml.securitySchemes),
     paths: parseResources(raml.resources),
     definitions: parseSchemas(raml.schemas)
-  }, parseBaseUri(raml));
+  };
+
+  parseBaseUri(raml, swagger);
 
   jp.apply(swagger.paths, '$..*.schema' , function (schema) {
     if (!schema || _.isEmpty(schema))
@@ -56,27 +58,40 @@ exports.convert = function (raml) {
   return swagger;
 };
 
-function parseBaseUri(raml) {
+function parseBaseUri(raml, swagger) {
   var baseUri = raml.baseUri;
 
   if (!baseUri)
-    return {};
+    return;
 
+  var baseUriParameters = _.omit(raml.baseUriParameters, 'version');
   baseUri = baseUri.replace(/{version}/g, raml.version);
-  //Don't support other URI templates right now.
-  assert(baseUri.indexOf('{') == -1);
-
   baseUri = URI(baseUri);
 
-  assert(!('baseUriParameters' in raml) ||
-    _.isEqual(_.keys(raml.baseUriParameters), ['version']));
+  // Split out part path segments starting from first template param
+  var match = /^(.*?)(\/[^\/]*?{.*)?$/.exec(baseUri.path());
+  baseUri.path(match[1]);
+  var pathPrefix = match[2];
+
+  //Don't support other URI templates right now.
+  assert(baseUri.href().indexOf('{') == -1);
   assert(!('uriParameters' in raml));
 
-  return {
+  _.assign(swagger, {
     host: baseUri.host(),
     basePath: '/' + baseUri.pathname().replace(/^\/|\/$/, ''),
     schemes: parseProtocols(raml.protocols) || [baseUri.scheme()]
-  };
+  });
+
+  if (!pathPrefix)
+    return;
+
+  pathPrefix = pathPrefix.replace(/\/$/, '');
+  baseUriParameters = parseParametersList(baseUriParameters);
+  swagger.paths = _.mapKeys(swagger.paths, function (value, key) {
+    value.parameters = _.concat(baseUriParameters, value.parameters);
+    return pathPrefix + key;
+  });
 }
 
 function parseSecuritySchemes(ramlSecuritySchemes) {
