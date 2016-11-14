@@ -294,11 +294,11 @@ function parseParametersList(params, inValue) {
      }
 
      if (value.repeat === true) {
-       assert(['query', 'formData'].indexOf(inValue) !== -1);
+       assert(['query', 'formData', 'header'].indexOf(inValue) !== -1);
        srParameter = {
          type: 'array',
          items: srParameter,
-         collectionFormat: 'multi'
+         collectionFormat: inValue === 'header' ? 'csv' : 'multi'
        }
      }
 
