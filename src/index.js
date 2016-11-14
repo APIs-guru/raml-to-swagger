@@ -431,6 +431,14 @@ function convertSchema(schema) {
     }
   });
 
+  //Fix for $schema in items -- Removing $schema from items
+  _.each(jp.nodes(schema, '$..properties[?(@.type === "array")]'), function (result) {
+    var value = result.value;
+    if (value.items && value.items.$schema) {
+      delete value.items.$schema;
+    }
+  });
+
   // Fix case when arrays definition wrapped with array, like that:
   // [{
   //   "type": "array",
