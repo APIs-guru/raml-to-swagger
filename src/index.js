@@ -366,7 +366,10 @@ function convertSchema(schema) {
 
   //Add '#/definitions/' prefix to all internal refs
   jp.apply(schema, '$..*["$ref"]' , function (ref) {
-    return '#/definitions/' + ref;
+    if (_.startsWith(ref, 'http://') || _.startsWith(ref, 'https://'))
+      return ref; //Skip external refs
+    if (!_.startsWith(ref, '#/definitions/'))
+      return '#/definitions/' + ref;
   });
 
   //Fixes for common mistakes in RAML 0.8
