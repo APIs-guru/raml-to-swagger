@@ -1,5 +1,5 @@
 # raml-to-swagger
-Library for converting RAML format into Swagger 2.0
+Library for converting [RAML 0.8](https://github.com/raml-org/raml-spec/blob/master/versions/raml-08/raml-08.md) format into Swagger 2.0
 
 **Notice**: This lib doesn't intended to be used on it's own.
 
