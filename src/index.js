@@ -467,6 +467,17 @@ function convertSchema(schema) {
     }
   });
 
+
+  // Fix empty 'required' array
+  _.each(jp.nodes(schema, '$..required'), function(result) {
+    var name = _.last(result.path);
+    var parent = jp.value(schema, jp.stringify(_.dropRight(result.path)));
+
+    if (parent[name] instanceof Array && parent[name].length == 0) {
+      delete parent[name];
+    }
+  });
+
   // Fix case then 'items' value is empty or single element array.
   function unwrapItems(schema) {
     if (_.isEmpty(schema.items))
