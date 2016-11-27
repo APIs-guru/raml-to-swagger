@@ -435,10 +435,9 @@ function convertSchema(schema) {
   });
 
   //Fix for $schema in items -- Removing $schema from items
-  _.each(jp.nodes(schema, '$..properties[?(@.type === "array")]'), function (result) {
-    var value = result.value;
-    if (value.items && value.items.$schema) {
-      delete value.items.$schema;
+  _.each(jp.nodes(schema, '$..properties[?(@.type === "array")].items'), function (result) {
+    if (!_.isUndefined(result.value.$schema)) {
+      delete result.value.$schema;
     }
   });
 
@@ -476,7 +475,7 @@ function convertSchema(schema) {
     var name = _.last(result.path);
     var parent = jp.value(schema, jp.stringify(_.dropRight(result.path)));
 
-    if (parent[name] instanceof Array && parent[name].length == 0) {
+    if (_.isArray(result.value) && _.isEmpty(result.value)) {
       delete parent[name];
     }
   });
